@@ -1,7 +1,7 @@
 from builtins import range
 from builtins import object
 import numpy as np
-from past.builtins import xrange
+#from past.builtins import xrange
 
 
 class KNearestNeighbor(object):
@@ -131,7 +131,7 @@ class KNearestNeighbor(object):
         #########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        dists = np.sqrt((-2*np.dot(X, self.X_train.T)) + np.sum(X*X, axis = 1, keepdims=True) + np.sum(self.X_train*self.X_train, axis =1))
+        dists = np.sqrt((-2*np.dot(X, self.X_train.T)) + np.sum(X*X, axis = 1, keepdims=True) + np.sum(self.X_train*self.X_train, axis =1, keepdims = True))
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
