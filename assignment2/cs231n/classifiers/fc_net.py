@@ -1,6 +1,7 @@
 from builtins import range
 from builtins import object
 import numpy as np
+import pdb
 
 from cs231n.layers import *
 from cs231n.layer_utils import *
@@ -201,6 +202,10 @@ class FullyConnectedNet(object):
                 self.params['W%d'%(i+1)] = weight_scale *np.random.randn(hidden_dims[i-1], hidden_dims[i])
                 self.params['b%d'%(i+1)] = np.zeros(hidden_dims[i])
 
+            if self.normalization == 'batchnorm' and i<self.num_layers-1:
+                self.params['gamma%d'%(i+1)] = np.ones(hidden_dims[i])
+                self.params['beta%d'%(i+1)] = np.zeros(hidden_dims[i])
+
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -262,18 +267,33 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         caches = {}
+        if self.normalization != 'batchnorm':
+            for i in range(self.num_layers):
+                Wi = 'W' + str(i+1)
+                bi = 'b' + str(i+1)
 
-        for i in range(self.num_layers):
-            Wi = 'W' + str(i+1)
-            bi = 'b' + str(i+1)
+                if i==0:
+                    out = X
+                if i == self.num_layers-1:
+                    scores, caches[i+1] = affine_forward(out, self.params[Wi], self.params[bi])
 
-            if i==0:
-                out = X
-            if i == self.num_layers-1:
-                scores, caches[i+1] = affine_forward(out, self.params[Wi], self.params[bi])
+                else:
+                    out, caches[i+1] = affine_relu_forward(out, self.params[Wi], self.params[bi])
 
-            else:
-                out, caches[i+1] = affine_relu_forward(out, self.params[Wi], self.params[bi])
+        else:
+            for i in range(self.num_layers):
+                Wi = 'W' + str(i+1)
+                bi = 'b' + str(i+1)
+                gammai = 'gamma' + str(i+1)
+                betai = 'beta' + str(i+1)
+
+                if i==0:
+                    out = X
+                if i == self.num_layers-1:
+                    scores, caches[i+1] = affine_forward(out, self.params[Wi], self.params[bi])
+
+                else:
+                    out, caches[i+1] = affine_batchnorm_relu_forward(out, self.params[Wi], self.params[bi], self.params[gammai], self.params[betai], self.bn_params[i])
 
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -303,22 +323,45 @@ class FullyConnectedNet(object):
 
         loss, dscores = softmax_loss(scores, y)
 
-        for i in range(self.num_layers):
+        if self.normalization != 'batchnorm':
+            for i in range(self.num_layers):
 
-            Wi = 'W' + str(self.num_layers-i)
-            bi = 'b' + str(self.num_layers-i)
+                Wi = 'W' + str(self.num_layers-i)
+                bi = 'b' + str(self.num_layers-i)
 
-            loss += 0.5*self.reg*np.sum(np.square(self.params[Wi]))
+                loss += 0.5*self.reg*np.sum(np.square(self.params[Wi]))
 
-            if i==0:
-                dout = dscores
-                dout, grads[Wi], grads[bi] = affine_backward(dout, caches[self.num_layers-i])
+                if i==0:
+                    dout = dscores
+                    dout, grads[Wi], grads[bi] = affine_backward(dout, caches[self.num_layers-i])
 
-            else:
-                dout, grads[Wi], grads[bi] = affine_relu_backward(dout, caches[self.num_layers-i])
+                else:
+                    dout, grads[Wi], grads[bi] = affine_relu_backward(dout, caches[self.num_layers-i])
 
-            grads[Wi] += self.reg*self.params[Wi]
+                grads[Wi] += self.reg*self.params[Wi]
 
+
+
+        else:
+            for i in range(self.num_layers):
+
+                Wi = 'W' + str(self.num_layers-i)
+                bi = 'b' + str(self.num_layers-i)
+                gammai = 'gamma' + str(self.num_layers-i)
+                betai = 'beta' + str(self.num_layers-i)
+
+                loss += 0.5*self.reg*np.sum(np.square(self.params[Wi]))
+
+                if i==0:
+                    dout = dscores
+                    dout, grads[Wi], grads[bi] = affine_backward(dout, caches[self.num_layers-i])
+
+                else:
+                    dout, grads[Wi], grads[bi], grads[gammai], grads[betai] = affine_batchnorm_relu_backward(dout, caches[self.num_layers-i])
+                    #print('i는 %d'%(i), grads[bi])
+
+
+                grads[Wi] += self.reg*self.params[Wi]
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################

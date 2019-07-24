@@ -1,0 +1,46 @@
+dout = dout
+
+dbeta = dout
+
+dgamma = dout * nor_x
+dnor_x = dout * gamma
+
+1/np.sqrt(s_v +eps) = A
+x - s_m = B = zeor_centered2
+
+dA = dnor_x * B
+dB = dnor_x * A
+
+dX_1 : dnor_x * A = dB
+
+dmeanX = -dB
+
+np.sqrt(s_v + eps) = C = root_var+eps
+
+dC = dA * (-1 / C^2)
+
+
+s_v + eps = D = var_eps
+
+dD = dC * 0.5 / np.sqrt(D)
+
+ds_v = dD
+
+
+np.square(X-meanX) = F = square_z_c
+
+dF = np.ones(N,D) * ds_v/m
+
+X - meanX = G = zero_centered1
+
+dG = dF * 2 * G
+
+dX_2 = dG
+
+dmeanX = -dG
+
+dmeanX = -dG - dB
+
+dX_3  = np.ones(N,D) * (-dG-dB) /N
+
+dX = dB + dG + np.ones(N,D) *(-dG-dB)/N
