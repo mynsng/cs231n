@@ -51,11 +51,17 @@ class ThreeLayerConvNet(object):
         # IMPORTANT: For this assignment, you can assume that the padding          #
         # and stride of the first convolutional layer are chosen so that           #
         # **the width and height of the input are preserved**. Take a look at      #
-        # the start of the loss() function to see how that happens.                #                           
+        # the start of the loss() function to see how that happens.                #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        C, H, W = input_dim[0], input_dim[1], input_dim[2]
+        self.params['W1'] = weight_scale *np.random.randn(num_filters, C, filter_size, filter_size)
+        self.params['W2'] = weight_scale *np.random.randn(num_filters*(H//2)*(W//2), hidden_dim)
+        self.params['W3'] = weight_scale *np.random.randn(hidden_dim, num_classes)
+        self.params['b1'] = np.zeros(num_filters)
+        self.params['b2'] = np.zeros(hidden_dim)
+        self.params['b3'] = np.zeros(num_classes)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -95,7 +101,9 @@ class ThreeLayerConvNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        hidden_layer1, conv_cache = conv_relu_pool_forward(X, W1, b1, conv_param, pool_param)
+        hidden_layer2, affine_cache1 = affine_relu_forward(hidden_layer1, W2, b2)
+        scores, affine_cache2 = affine_forward(hidden_layer2, W3, b3)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -118,7 +126,17 @@ class ThreeLayerConvNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        loss, dscores = softmax_loss(scores, y)
+        loss += 0.5 * self.reg * (np.sum(W1*W1) + np.sum(W2*W2)+ np.sum(W3*W3))
+
+        dhidden_layer2, grads['W3'], grads['b3'] = affine_backward(dscores, affine_cache2)
+        dhidden_layer1, grads['W2'], grads['b2'] = affine_relu_backward(dhidden_layer2, affine_cache1)
+        _, grads['W1'], grads['b1'] = conv_relu_pool_backward(dhidden_layer1, conv_cache)
+
+        grads['W1'] += self.reg * W1
+        grads['W2'] += self.reg * W2
+        grads['W3'] += self.reg * W3
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
